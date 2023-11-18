@@ -44,7 +44,7 @@ bool esteCorect(int numar, int numarScrisPeCartonas)
 			nrPerechi++;
 		else if (i == 0 || i == n-2) return 0;
 	}
-	if (nrPerechi != n-2) return 0;
+	if (nrPerechi < n-2) return 0;
 	return 1;
 }
 void citesteDateleDeIntrare()
