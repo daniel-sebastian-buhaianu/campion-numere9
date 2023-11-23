@@ -1,72 +1,92 @@
 #include <fstream>
 #include <cstring>
+#include <cstdlib>
 #define MAX_CIFRE 9
+#define MAX_BUCATI 35
+#define MAX_NUMERE MAX_BUCATI*MAX_BUCATI
 using namespace std;
-int rezultat;
-void citesteDateleDeIntrare();
-void afiseazaDateleDeIesire();
+char bucati[MAX_BUCATI][MAX_CIFRE+1];
+int numere[MAX_NUMERE], nrBucati, nrNumere;
+void construiesteToateBucatile(char *);
+void construiesteToateNumerele();
+int pozitieInSirCrescator(int numar, int vector[], int nrElemente);
 int main()
 {
-	citesteDateleDeIntrare();
-	afiseazaDateleDeIesire();
-	return 0;
-}
-void convertesteNumarInSirDeCaractere(int numar, char sir[])
-{
-	int lg = 0;
-	while (numar)
-	{
-		sir[lg++] = '0' + numar%10;
-		numar /= 10;
-	}
-	int i, j;
-	for (i = 0, j = lg-1; i < j; i++, j--)
-		swap(sir[i], sir[j]);
-	sir[lg] = 0;
-}
-bool esteCorect(int numar, int numarScrisPeCartonas)
-{
-	char sirNumar[MAX_CIFRE+1], sirNumarCartonas[MAX_CIFRE+1];
-	convertesteNumarInSirDeCaractere(numarScrisPeCartonas, sirNumarCartonas);
-	convertesteNumarInSirDeCaractere(numar, sirNumar);
-	int n = strlen(sirNumar);
-	int m = strlen(sirNumarCartonas);
-	if (n > m) return 0;
-	if (n < 4) return 0;
-	int nrPerechi, i;
-	for (nrPerechi = i = 0; i < n-1; i++)
-	{
-		char pereche[3];
-		pereche[0] = sirNumar[i];
-		pereche[1] = sirNumar[i+1];
-		pereche[2] = 0;
-		if (strstr(sirNumarCartonas, pereche))
-			nrPerechi++;
-		else if (i == 0 || i == n-2) return 0;
-	}
-	if (nrPerechi < n-2) return 0;
-	return 1;
-}
-void citesteDateleDeIntrare()
-{
+	char numarScrisPeCartonase[MAX_CIFRE+1];
+	int numarulDeNumereDinLista;
 	ifstream citeste("numere9.in");
-	int numarScrisPeCartonas, nrNumere;
-	citeste >> numarScrisPeCartonas;
-	citeste >> nrNumere;
-	while (nrNumere > 0 && !rezultat)
+	citeste >> numarScrisPeCartonase;
+	construiesteToateBucatile(numarScrisPeCartonase);
+	construiesteToateNumerele();
+	citeste >> numarulDeNumereDinLista;
+	while (numarulDeNumereDinLista > 0)
 	{
 		int numar;
 		citeste >> numar;
-		if (esteCorect(numar, numarScrisPeCartonas))
-			rezultat = numar;
-		nrNumere--;
+		int pozitie = pozitieInSirCrescator(numar, numere, nrNumere);
+		if (pozitie < nrNumere && numere[pozitie] == numar)
+		{
+			ofstream scrie("numere9.out");
+			scrie << numar;
+			scrie.close();
+			break;
+		}
+		numarulDeNumereDinLista--;
 	}
 	citeste.close();
+	return 0;
 }
-void afiseazaDateleDeIesire()
+void lipesteBucati(char bucataStanga[], char bucataDreapta[], char bucata[])
 {
-	ofstream scrie("numere9.out");
-	scrie << rezultat;
-	scrie.close();
+	strcpy(bucata, "");
+	strcat(bucata, bucataStanga);
+	strcat(bucata, bucataDreapta);
 }
-
+int pozitieInSirCrescator(int numar, int vector[], int nrElemente)
+{
+	int stanga = -1, dreapta = nrElemente;
+	while (dreapta-stanga > 1)
+	{
+		int mijloc = stanga + (dreapta-stanga)/2;
+		if (vector[mijloc] < numar)
+			stanga = mijloc;
+		else
+			dreapta = mijloc;
+	}
+	return dreapta;
+}
+void insereazaNumarInVectorLaPozitia(int numar, int vector[], int & nrElemente, int pozitie)
+{
+	for (int i = nrElemente; i > pozitie; i--) vector[i] = vector[i-1];
+	vector[pozitie] = numar;
+	nrElemente++;
+}
+void construiesteToateNumerele()
+{
+	for (int i = 0; i < nrBucati; i++)
+		for (int j = 0; j < nrBucati; j++)
+		{
+			if (strlen(bucati[i]) + strlen(bucati[j]) <= MAX_CIFRE)
+			{
+				char bucata[MAX_CIFRE+1];
+				lipesteBucati(bucati[i], bucati[j], bucata);
+				int nr = atoi(bucata); // converteste sir in numar intreg
+				int poz = pozitieInSirCrescator(nr, numere, nrNumere);
+				insereazaNumarInVectorLaPozitia(nr, numere, nrNumere, poz);
+			}
+		}
+}
+void construiesteToateBucatile(char numar[])
+{
+	nrBucati = 0;
+	int nrCifre = strlen(numar);
+	if (nrCifre > 2)
+		for (int lungime = 2; lungime < nrCifre; lungime++)
+			for (int i = 0; i <= nrCifre-lungime; i++)
+			{
+				char bucata[MAX_CIFRE+1] = "";
+				strncpy(bucata, numar + i, lungime);
+				bucata[lungime] = 0;
+				strcpy(bucati[nrBucati++], bucata);
+			}
+}
